@@ -5,9 +5,9 @@
  * common.h : constants, Booking structure, input helpers
  * stage1.h : Stack (seat select / undo), Queue (confirmed bookings)
  * stage2.h : Singly Linked Lists (movie catalogue, recently viewed)
- * stage3.h : BST (movie index), Graph (theatre network: BFS, DFS,
- *            Dijkstra), Hashing (booking lookup), Searching
- *            (linear vs binary)
+ * tree.h   : BST (movie index), Hashing (booking lookup),
+ *            Searching (linear vs binary)
+ * graph.h  : Graph (theatre network: BFS, DFS, Dijkstra)
  * main.c   : booking workflow, admin and user menus, main()
  *
  * Compile (gcc) :  gcc main.c -o movie_booking
@@ -16,7 +16,8 @@
 #include "common.h"
 #include "stage1.h"
 #include "stage2.h"
-#include "stage3.h"
+#include "tree.h"
+#include "graph.h"
 
 /* ================================================================
  *     CATALOGUE : keeps list, BST, theatres and history in sync
