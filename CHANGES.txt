@@ -1,0 +1,53 @@
+WHAT CLAUDE DID - SLA STAGE 3 (Group 13)
+========================================
+
+1. FINISHED RISHI'S CODE
+   - His file stopped at line 684 (inside displayNetwork), so it did not compile
+   - Wrote the missing parts: BFS, DFS, Dijkstra, nearest theatre,
+     new bookTicket, all menus, main()
+
+2. ADDED HASHING  (stage3.h, part C)  - teacher asked for it, was missing
+   - Every booking is stored in a hash table (bookingId % 11, chaining)
+   - User: "Find My Booking" by ID
+   - Admin: "Booking Hash Table" shows all buckets
+
+3. ADDED SEARCHING  (stage3.h, part D)
+   - Admin: "Compare Linear vs Binary Search"
+   - Shows how many comparisons each search takes
+
+4. NEW / IMPROVED FEATURES
+   - Same seat cannot be booked twice (same movie + same theatre)
+   - Cannot pick the same seat twice in one booking, 0 = cancel
+   - While booking: pick theatre yourself OR let Dijkstra find the nearest
+   - Recently viewed: no repeats, keeps last 5, deleted movies removed
+   - Duplicate movie ID / name (any case) blocked
+   - Price limited to 1-5000 (Turbo C int is 16-bit)
+   - All inputs checked, no infinite loops on bad input
+   - All memory freed on exit
+
+5. SPLIT INTO 5 CODE FILES (one per stage)
+   - common.h  : constants, Booking struct, input helpers
+   - stage1.h  : stack + queue
+   - stage2.h  : linked lists
+   - stage3.h  : BST, graph, hashing, searching
+   - main.c    : booking, menus, main()
+   - Only main.c is compiled (it includes the headers)
+   - Plain C89, so it works in Turbo C (open MAIN.C, Ctrl+F9)
+
+6. TESTED
+   - Compiles with zero warnings (strict C89)
+   - Two full test runs, every feature works
+   - Not yet tried in real Turbo C
+
+7. FILES GIVEN
+   - claudes work folder (5 code files + README.md + this file)
+   - claudes work.zip (same thing, to send to friend)
+
+TO DO BEFORE REVIEW
+   - Read stage3.h and the booking part of main.c
+     (ma'am will ask you to explain)
+   - Add hashing + searching sections to the Stage 3 report
+
+HOW TO RUN (inside the claudes work folder):
+   gcc main.c -o movie_booking
+   movie_booking.exe
