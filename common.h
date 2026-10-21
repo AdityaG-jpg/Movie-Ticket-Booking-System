@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
+#include <errno.h>
 
 #define MAX_SEATS      5      /* seats per booking (size of seat stack)  */
 #define MAX_SEAT_NO    60     /* every screen has seats 1..60            */
@@ -38,37 +40,55 @@ struct Booking {
  * ================================================================ */
 
 /* Clears invalid keyboard input (also stops on EOF) */
-void clearInput(void) {
+static void clearInput(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-/* Reads an int safely. Returns 1 on success, 0 on failure */
-int getInt(int* x) {
-    int r = scanf("%d", x);
+/* Reads an int safely. Returns 1 on success, 0 on failure.
+ * The whole word typed must be a number that fits in an int, so
+ * "12abc" or "99999999999" are rejected instead of being half-read
+ * or silently wrapped around. */
+static int getInt(int* x) {
+    char word[40];
+    char* end;
+    long v;
+    int r;
+
+    r = scanf("%39s", word);
     if (r == EOF) {                 /* input closed: no way to continue */
         printf("\nInput ended. Exiting.\n");
         exit(0);
     }
-    if (r != 1) {
-        clearInput();
+    errno = 0;
+    v = strtol(word, &end, 10);
+    if (*end != '\0' || errno == ERANGE || v > INT_MAX || v < INT_MIN) {
+        clearInput();               /* drop the rest of the bad line */
         return 0;
     }
+    *x = (int)v;
     return 1;
 }
 
-/* Reads a name that may contain spaces (max 29 chars) */
-int readName(char* buf) {
+/* Reads a name that may contain spaces (max 29 chars).
+ * Longer text is cut to 29 chars and trailing spaces are removed.
+ * Returns 1 on success, 0 if nothing usable was read. */
+static int readName(char* buf) {
+    int len;
+
     if (scanf(" %29[^\n]", buf) != 1) {
         clearInput();
         return 0;
     }
     clearInput();
-    return 1;
+    len = (int)strlen(buf);
+    while (len > 0 && isspace((unsigned char)buf[len - 1]))
+        buf[--len] = '\0';
+    return len > 0;
 }
 
 /* Case-insensitive string compare */
-int cmpNoCase(const char* a, const char* b) {
+static int cmpNoCase(const char* a, const char* b) {
     int x, y;
     while (*a && *b) {
         x = tolower((unsigned char)*a);
@@ -81,7 +101,7 @@ int cmpNoCase(const char* a, const char* b) {
 }
 
 /* Case-insensitive prefix check */
-int startsWithNoCase(const char* s, const char* prefix) {
+static int startsWithNoCase(const char* s, const char* prefix) {
     while (*prefix) {
         if (tolower((unsigned char)*s) != tolower((unsigned char)*prefix))
             return 0;
