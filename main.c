@@ -6,7 +6,7 @@
  * stage1.h : Stack (seat select / undo), Queue (confirmed bookings)
  * stage2.h : Singly Linked Lists (movie catalogue, recently viewed)
  * tree.h   : BST (movie index), Hashing (booking lookup),
- *            Searching (linear vs binary)
+ *            Searching (binary search by ID)
  * graph.h  : Graph (theatre network: BFS, DFS, Dijkstra)
  * main.c   : booking workflow, admin and user menus, main()
  *
@@ -309,15 +309,6 @@ void adminDeleteMovie(void) {
         printf("Movie ID %d deleted successfully.\n", id);
 }
 
-void adminCompareSearch(void) {
-    int id;
-
-    viewMovies();
-    printf("\nEnter Movie ID to search: ");
-    if (!getInt(&id)) { printf("Invalid input.\n"); return; }
-    compareSearches(id);
-}
-
 void adminAddTheatre(void) {
     char name[NAME_LEN], area[NAME_LEN];
     int t;
@@ -436,8 +427,7 @@ void adminMenu(void) {
         printf("5. Movie Index Info (BST)\n");
         printf("6. Theatre Network (Graph)\n");
         printf("7. Booking Hash Table (Hashing)\n");
-        printf("8. Compare Linear vs Binary Search\n");
-        printf("9. Back\n");
+        printf("8. Back\n");
         printf("Enter choice: ");
 
         if (!getInt(&choice)) {
@@ -453,8 +443,7 @@ void adminMenu(void) {
             case 5: showBSTInfo(); break;
             case 6: theatreMenu(); break;
             case 7: displayHashTable(); break;
-            case 8: adminCompareSearch(); break;
-            case 9: return;
+            case 8: return;
             default: printf("Invalid choice.\n");
         }
     }
@@ -463,43 +452,46 @@ void adminMenu(void) {
 /* ================================================================
  *                          USER MENU
  * ================================================================ */
-void searchById(void) {
-    int id;
-    struct MovieNode* m;
-
-    printf("Enter Movie ID to Search: ");
-    if (!getInt(&id)) { printf("Invalid input.\n"); return; }
-    m = searchMovie(id);
-    if (m != NULL) {
-        printf("\n[Found] ID: %d | Movie: %s | Price: Rs.%d\n", m->id, m->name, m->price);
-        addRecentlyViewed(m->id, m->name);
-    } else {
-        printf("Movie not found.\n");
-    }
-}
-
-/* Exact name search in the BST, falls back to prefix search */
-void searchByName(void) {
+/* One search for the user:
+ *   by ID   -> binary search on movies sorted by ID
+ *   by name -> BST search, falls back to prefix search */
+void searchMovieMenu(void) {
+    int choice, id, comparisons;
     char name[NAME_LEN];
     struct BSTNode* node;
-    struct MovieNode* m;
+    struct MovieNode* m = NULL;
 
-    printf("Enter Movie Name (or starting letters): ");
-    if (!readName(name)) { printf("Invalid input.\n"); return; }
-
-    node = bstSearchByName(name);
-    if (node != NULL) {
-        m = searchMovie(node->id);
-        if (m) {
-            printf("\n[Found] ID: %d | Movie: %s | Price: Rs.%d\n", m->id, m->name, m->price);
-            addRecentlyViewed(m->id, m->name);
-            return;
-        }
+    printf("\nSearch by:\n1. Movie ID\n2. Movie Name\nEnter choice: ");
+    if (!getInt(&choice) || (choice != 1 && choice != 2)) {
+        printf("Invalid choice.\n");
+        return;
     }
 
-    printf("\nNo exact match. Movies starting with \"%s\":\n", name);
-    if (bstPrefixSearch(name) == 0)
-        printf("  No movie found.\n");
+    if (choice == 1) {
+        printf("Enter Movie ID: ");
+        if (!getInt(&id)) { printf("Invalid input.\n"); return; }
+        m = binarySearchMovie(id, &comparisons);
+        if (m == NULL) {
+            printf("Movie not found. (Binary search: %d comparison(s))\n", comparisons);
+            return;
+        }
+        printf("\n[Found] ID: %d | Movie: %s | Price: Rs.%d\n", m->id, m->name, m->price);
+        printf("(Binary search: %d comparison(s))\n", comparisons);
+    } else {
+        printf("Enter Movie Name (or starting letters): ");
+        if (!readName(name)) { printf("Invalid input.\n"); return; }
+
+        node = bstSearchByName(name);
+        if (node != NULL) m = searchMovie(node->id);
+        if (m == NULL) {
+            printf("\nNo exact match. Movies starting with \"%s\":\n", name);
+            if (bstPrefixSearch(name) == 0)
+                printf("  No movie found.\n");
+            return;
+        }
+        printf("\n[Found] ID: %d | Movie: %s | Price: Rs.%d\n", m->id, m->name, m->price);
+    }
+    addRecentlyViewed(m->id, m->name);
 }
 
 void nearestTheatre(void) {
@@ -531,13 +523,12 @@ void userMenu(void) {
         printf("\n========== USER MENU ==========\n");
         printf("1. View Movies\n");
         printf("2. View Movies A-Z (BST)\n");
-        printf("3. Search Movie by ID\n");
-        printf("4. Search Movie by Name (BST)\n");
-        printf("5. Find Nearest Theatre for a Movie (Graph)\n");
-        printf("6. Book Ticket\n");
-        printf("7. Find My Booking (Hashing)\n");
-        printf("8. Recently Viewed Movies\n");
-        printf("9. Back\n");
+        printf("3. Search Movie (by ID or Name)\n");
+        printf("4. Find Nearest Theatre for a Movie (Graph)\n");
+        printf("5. Book Ticket\n");
+        printf("6. Find My Booking (Hashing)\n");
+        printf("7. Recently Viewed Movies\n");
+        printf("8. Back\n");
         printf("Enter choice: ");
 
         if (!getInt(&choice)) {
@@ -548,13 +539,12 @@ void userMenu(void) {
         switch (choice) {
             case 1: viewMovies(); break;
             case 2: displayMoviesSorted(); break;
-            case 3: searchById(); break;
-            case 4: searchByName(); break;
-            case 5: nearestTheatre(); break;
-            case 6: bookTicket(); break;
-            case 7: findMyBooking(); break;
-            case 8: displayRecentlyViewed(); break;
-            case 9: return;
+            case 3: searchMovieMenu(); break;
+            case 4: nearestTheatre(); break;
+            case 5: bookTicket(); break;
+            case 6: findMyBooking(); break;
+            case 7: displayRecentlyViewed(); break;
+            case 8: return;
             default: printf("Invalid choice.\n");
         }
     }
